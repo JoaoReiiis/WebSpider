@@ -1,12 +1,3 @@
-# Scrapy settings for mobilidade project
-#
-# For simplicity, this file contains only settings considered important or
-# commonly used. You can find more settings consulting the documentation:
-#
-#     https://docs.scrapy.org/en/latest/topics/settings.html
-#     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
-#     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
-
 BOT_NAME = "mobilidade"
 
 SPIDER_MODULES = ["mobilidade.spiders"]
@@ -30,12 +21,47 @@ MONGO_URI = 'mongodb://localhost:27017/'
 MONGO_DATABASE = 'mobilidade_db'
 
 BRONZE_COLLECTION = 'mobilidade_bronze'
+SILVER_COLLECTION = 'mobilidade_silver'
 
-# Disable cookies (enabled by default)
-#COOKIES_ENABLED = False
+# --- CONFIGURAÇÕES DO CRAWLER  ---
+MOB_MAX_DEPTH = 8
+MOB_SCORE_THRESHOLD = 3.0
+MOB_MAX_LINKS_PER_PAGE = 15
+MOB_MAX_QUERY_PARAMS = 5
 
-# Disable Telnet Console (enabled by default)
-#TELNETCONSOLE_ENABLED = False
+# Lógica de pontuação
+MOB_HOST_MATCH_WEIGHT = 4.0
+MOB_KEYWORD_PATH_WEIGHT = 2.0
+MOB_ANCHOR_TEXT_WEIGHT = 1.5
+MOB_DEPTH_PENALTY = 0.5
+
+# Palavras-chave positivas
+MOB_KEYWORDS = [
+    "mobilidade", "mobilidade urbana", "cidade-inteligente", "smart-city",
+    "transporte", "transporte-publico", "veiculo-eletrico", "ev", "vlt",
+    "metro", "brt", "bicicleta", "ciclovia", "urbanismo", "sustentabilidade",
+    "iot", "big-data", "ia", "inteligencia-artificial", "5g", "blockchain",
+    "veiculos-autonomos", "veiculos-conectados", "maas", "eVTOL",
+    "semaforos-inteligentes", "estacao-de-recarga", "v2g", "cidade-15-minutos",
+    "mobilidade-compartilhada", "logistica-urbana", "last-mile",
+    "sistemas-de-transporte-inteligente", "sti", "transporte-ativo",
+]
+
+# Palavras-chave que, se presentes em uma URL, a descartam
+MOB_NEGATIVE_KEYWORDS = [
+    "login", "cadastro", "assine", "contato", "sobre", "politica-de-privacidade",
+    "termos-de-uso", "cookies", "/feed", "/rss", "/tag/", "/author/", "/search",
+]
+
+# Padrões de URL a serem ignorados (regex)
+MOB_BLACKLIST_REGEX = r'\.(jpg|jpeg|png|gif|pdf|zip|rar)(\?.*)?$|/page/\d+'
+
+# Custom settings
+EXTRACT_HEAVY_IN_CRAWLER = True
+
+# Extraction limits
+MAX_TEXT_CHARS = 1000000
+MAX_LINKS = 200
 
 # Override the default request headers:
 #DEFAULT_REQUEST_HEADERS = {
@@ -43,49 +69,16 @@ BRONZE_COLLECTION = 'mobilidade_bronze'
 #    "Accept-Language": "en",
 #}
 
-# Enable or disable spider middlewares
-# See https://docs.scrapy.org/en/latest/topics/spider-middleware.html
-#SPIDER_MIDDLEWARES = {
-#    "mobilidade.middlewares.MobilidadeSpiderMiddleware": 543,
-#}
-
-# Enable or disable downloader middlewares
-# See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
-#DOWNLOADER_MIDDLEWARES = {
-#    "mobilidade.middlewares.MobilidadeDownloaderMiddleware": 543,
-#}
-
-# Enable or disable extensions
-# See https://docs.scrapy.org/en/latest/topics/extensions.html
-#EXTENSIONS = {
-#    "scrapy.extensions.telnet.TelnetConsole": None,
-#}
-
 ITEM_PIPELINES = {
-  "mobilidade.pipelines.MongoPipeline": 300,
   "mobilidade.pipelines.BronzeMongoPipeline": 301,
+  "mobilidade.pipelines.SilverMongoPipeline": 302,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html
 AUTOTHROTTLE_ENABLED = True
-# The initial download delay
 AUTOTHROTTLE_START_DELAY = 5
-# The maximum download delay to be set in case of high latencies
-#AUTOTHROTTLE_MAX_DELAY = 60
-# The average number of requests Scrapy should be sending in parallel to
-# each remote server
 AUTOTHROTTLE_TARGET_CONCURRENCY = 1.0
-# Enable showing throttling stats for every response received:
-#AUTOTHROTTLE_DEBUG = False
-
-# Enable and configure HTTP caching (disabled by default)
-# See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html#httpcache-middleware-settings
-#HTTPCACHE_ENABLED = True
-#HTTPCACHE_EXPIRATION_SECS = 0
-#HTTPCACHE_DIR = "httpcache"
-#HTTPCACHE_IGNORE_HTTP_CODES = []
-#HTTPCACHE_STORAGE = "scrapy.extensions.httpcache.FilesystemCacheStorage"
 
 # Set settings whose default value is deprecated to a future-proof value
 FEED_EXPORT_ENCODING = "utf-8"
