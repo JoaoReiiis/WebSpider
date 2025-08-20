@@ -23,9 +23,17 @@ class MobilidadeSpider(scrapy.Spider):
     name = "mobilidade"
 
     start_urls = [
-        "https://mobilidade.estadao.com.br/",
-        "https://www.mobilize.org.br/noticias/",
         "https://valedosinconfidentes.com.br/",
+        "https://ecossistemainovap.com.br/",
+        "https://nortevalley.com/",
+        "https://parquetecnologicosrs.com.br/",
+        "https://cesullab.com.br/index.html",
+        "https://inovatech.pnl.mg.gov.br",
+        "https://bdtechhub.com.br/bd/",
+        "https://tiradentesinnovation.com/",
+        "https://inovai.org.br/itajuba-hardtech/#:~:text=O%20Ecossistema,e%20inova%C3%A7%C3%A3o%20de%20Itajub%C3%A1%2FMG",
+        "https://centev.ufv.br/",   
+        "https://uberhub.com.br/"
     ]
 
     @classmethod
