@@ -53,10 +53,11 @@ def build_bronze_item(response, parent_meta):
             except json.JSONDecodeError:
                 continue
 
-    redirect_urls = [normalize_url(url) for url in response.request.meta.get('redirect_urls', [])]
+    crawl_path = response.meta.get('redirect_chain', [])
     final_url = normalize_url(response.url)
-    if final_url not in redirect_urls:
-        redirect_urls.append(final_url)
+    
+    if not crawl_path or crawl_path[-1] != final_url:
+        crawl_path.append(final_url)
 
     seed_url = normalize_url(parent_meta.get('seed_url'))
     parent_url = normalize_url(parent_meta.get('parent_url'))
@@ -69,7 +70,7 @@ def build_bronze_item(response, parent_meta):
         "page_date": page_date,
         "raw_html": response.text,
         "content_length": len(response.body),
-        "redirect_chain": redirect_urls,
+        "redirect_chain": crawl_path,
         "parent_url": parent_url,
         "depth": response.meta.get('depth', 0)
     }
