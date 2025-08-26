@@ -27,7 +27,7 @@ def normalize_url(url):
     ))
     return normalized_url
 
-def build_bronze_item(response, parent_meta):
+def build_spider_data_item(response, settings):
     page_date = response.xpath(
         '//meta[@property="article:published_time"]/@content'
     ).get() or response.xpath(
@@ -59,26 +59,15 @@ def build_bronze_item(response, parent_meta):
     if not crawl_path or crawl_path[-1] != final_url:
         crawl_path.append(final_url)
 
-    seed_url = normalize_url(parent_meta.get('seed_url'))
-    parent_url = normalize_url(parent_meta.get('parent_url'))
+    seed_url = normalize_url(response.meta.get('seed_url'))
 
-    return {
-        "id": str(uuid.uuid4()),
-        "seed_url": seed_url,
-        "source_domain": urlparse(seed_url).netloc if seed_url else None,
-        "url": final_url,
-        "page_date": page_date,
-        "raw_html": response.text,
-        "content_length": len(response.body),
+    bronze_data = {
         "redirect_chain": crawl_path,
-        "parent_url": parent_url,
-        "depth": response.meta.get('depth', 0)
+        "depth": response.meta.get('depth', 0),
+        "source_domain": urlparse(seed_url).netloc if seed_url else None,
+        "url": final_url
     }
 
-def build_silver_item(bronze_item_data, response, settings):
-    """
-    Constrói um item no formato Silver a partir do item Bronze e da resposta da requisição.
-    """
     g_config = Configuration()
     g_config.enable_image_fetching = False
     g_config.use_meta_language = False
@@ -92,7 +81,7 @@ def build_silver_item(bronze_item_data, response, settings):
 
     internal_links = set()
     external_links = set()
-    source_domain = bronze_item_data.get("source_domain")
+    source_domain = bronze_data.get("source_domain")
     if source_domain:
         for link in response.css('a::attr(href)').getall():
             try:
@@ -105,19 +94,19 @@ def build_silver_item(bronze_item_data, response, settings):
                 pass
     
     cleaned_text = getattr(article, 'cleaned_text', '')
-
+    
     return {
-        'silver_id': str(uuid.uuid4()),
-        'bronze_id': bronze_item_data['id'],
-        'url': bronze_item_data['url'],
-        'source_domain': bronze_item_data['source_domain'],
+        'url': bronze_data['url'],
+        'source_domain': bronze_data['source_domain'],
         'crawl_date': datetime.datetime.now(datetime.timezone.utc),
+        'published_date': getattr(article, 'publish_date', None) or page_date,
         'title': getattr(article, 'title', ''),
         'description': getattr(article, 'meta_description', ''),
         'lang': getattr(article, 'meta_lang', ''),
         'readable_text': cleaned_text[:MAX_TEXT_CHARS],
         'text_length': len(cleaned_text),
-        'published_date': getattr(article, 'publish_date', None),
         'links_internal': list(internal_links)[:MAX_LINKS],
         'links_external': list(external_links)[:MAX_LINKS],
+        'redirect_chain': bronze_data['redirect_chain'],
+        'depth': bronze_data['depth']
     }

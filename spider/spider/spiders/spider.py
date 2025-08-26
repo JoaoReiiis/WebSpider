@@ -7,20 +7,19 @@ from typing import List
 
 import scrapy
 
-from ..items import BronzeItem, SilverItem
-from ..utils import build_bronze_item, build_silver_item, normalize_url
+from ..items import SpiderDataItem
+from ..utils import build_spider_data_item, normalize_url
 
 logger = logging.getLogger(__name__)
 
 def extract_host(url: str) -> str:
-    """Extrai o host de uma URL (ex: 'www.exemplo.com')."""
     return urlparse(url).netloc.lower()
 
 LinkCandidate = namedtuple("LinkCandidate", ["url", "anchor", "score"])
 
 
-class MobilidadeSpider(scrapy.Spider):
-    name = "mobilidade"
+class Spider(scrapy.Spider):
+    name = "spider"
 
     start_urls = [
         "https://valedosinconfidentes.com.br/",
@@ -38,23 +37,23 @@ class MobilidadeSpider(scrapy.Spider):
 
     @classmethod
     def from_crawler(cls, crawler, *args, **kwargs):
-        spider = super(MobilidadeSpider, cls).from_crawler(crawler, *args, **kwargs)
+        spider = super(Spider, cls).from_crawler(crawler, *args, **kwargs)
         
         settings = crawler.settings
-        spider.max_depth = settings.getint("MOB_MAX_DEPTH")
-        spider.score_threshold = settings.getfloat("MOB_SCORE_THRESHOLD")
-        spider.max_links_per_page = settings.getint("MOB_MAX_LINKS_PER_PAGE")
-        spider.max_query_params = settings.getint("MOB_MAX_QUERY_PARAMS")
-        spider.KEYWORDS = settings.getlist("MOB_KEYWORDS")
-        spider.NEGATIVE_KEYWORDS = settings.getlist("MOB_NEGATIVE_KEYWORDS")
+        spider.max_depth = settings.getint("MAX_DEPTH")
+        spider.score_threshold = settings.getfloat("SCORE_THRESHOLD")
+        spider.max_links_per_page = settings.getint("MAX_LINKS_PER_PAGE")
+        spider.max_query_params = settings.getint("MAX_QUERY_PARAMS")
+        spider.KEYWORDS = settings.getlist("KEYWORDS")
+        spider.NEGATIVE_KEYWORDS = settings.getlist("NEGATIVE_KEYWORDS")
         
-        blacklist_regex = settings.get("MOB_BLACKLIST_REGEX")
+        blacklist_regex = settings.get("BLACKLIST_REGEX")
         spider._blacklist_re = re.compile(blacklist_regex, re.I)
 
-        spider.host_match_weight = settings.getfloat("MOB_HOST_MATCH_WEIGHT")
-        spider.keyword_path_weight = settings.getfloat("MOB_KEYWORD_PATH_WEIGHT")
-        spider.anchor_text_weight = settings.getfloat("MOB_ANCHOR_TEXT_WEIGHT")
-        spider.depth_penalty = settings.getfloat("MOB_DEPTH_PENALTY")
+        spider.host_match_weight = settings.getfloat("HOST_MATCH_WEIGHT")
+        spider.keyword_path_weight = settings.getfloat("KEYWORD_PATH_WEIGHT")
+        spider.anchor_text_weight = settings.getfloat("ANCHOR_TEXT_WEIGHT")
+        spider.depth_penalty = settings.getfloat("DEPTH_PENALTY")
         
         return spider
 
@@ -72,23 +71,11 @@ class MobilidadeSpider(scrapy.Spider):
             )
 
     def parse(self, response):
-        parent_meta = {
-            "seed_url": response.meta.get("seed_url"),
-            "parent_url": response.meta.get("parent_url"),
-        }
-
         try:
-            bronze_item_data = build_bronze_item(response, parent_meta)
-            yield BronzeItem(bronze_item_data)
+            spider_data_payload = build_spider_data_item(response, self.settings)
+            yield SpiderDataItem(spider_data_payload)
         except Exception as e:
-            self.logger.error(f"Erro ao criar item Bronze para {response.url}: {e}")
-
-        try:
-            if self.settings.getbool("EXTRACT_HEAVY_IN_CRAWLER", False):
-                silver_payload = build_silver_item(bronze_item_data, response, self.settings)
-                yield SilverItem(silver_payload)
-        except Exception as e:
-            self.logger.error(f"Erro ao criar item Silver para {response.url}: {e}")
+            self.logger.error(f"Erro ao criar item SpiderData para {response.url}: {e}")
 
         current_depth = response.meta.get("depth", 0)
         if current_depth >= self.max_depth:
@@ -169,6 +156,6 @@ class MobilidadeSpider(scrapy.Spider):
             if param_count > self.max_query_params:
                 score -= 2.0
             else:
-                score -= 0.15 * param_count
+                score -= 0.1 * param_count
         
         return max(0.0, round(score, 2))
