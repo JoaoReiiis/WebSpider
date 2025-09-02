@@ -13,7 +13,7 @@ USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/1
 ROBOTSTXT_OBEY = True
 
 # Concurrency and throttling settings
-CONCURRENT_REQUESTS = 24
+CONCURRENT_REQUESTS = 16
 CONCURRENT_REQUESTS_PER_DOMAIN = 2
 DOWNLOAD_DELAY = 2
 
@@ -23,10 +23,10 @@ MONGO_DATABASE = 'spider_data'
 SPIDER_COLLECTION = 'SpiderData'
 
 # --- CONFIGURAÇÕES DO CRAWLER  ---
-MAX_DEPTH = 12
+MAX_DEPTH = 4
 SCORE_THRESHOLD = 1.2
 MAX_LINKS_PER_PAGE = 25
-MAX_QUERY_PARAMS = 10
+MAX_QUERY_PARAMS = 7
 
 # Lógica de pontuação
 HOST_MATCH_WEIGHT = 4.0
@@ -105,6 +105,16 @@ BLACKLIST_REGEX = r'(?i)\.(jpg|jpeg|png|gif|pdf|zip|rar)(\?.*)?$|/page/\d+|/feed
 # Extraction limits
 MAX_TEXT_CHARS = 100000
 MAX_LINKS = 2000
+
+# Ative (True) para que o spider varra completamente os domínios listados abaixo.
+# Desative (False) para que ele use a lógica de pontuação para todos.
+ENABLE_FULL_CRAWL = False
+
+# Lista de domínios para varrer por completo.
+# O spider seguirá todos os links internos destes sites, ignorando a profundidade.
+FULL_CRAWL_DOMAINS = [
+  "https://valedosinconfidentes.com.br/"
+]
 
 # Override the default request headers:
 #DEFAULT_REQUEST_HEADERS = {

@@ -7,7 +7,6 @@ class SpiderDataItem(scrapy.Item):
     crawl_date = scrapy.Field()
     published_date = scrapy.Field()
     description = scrapy.Field()
-    lang = scrapy.Field()
     readable_text = scrapy.Field()
     text_length = scrapy.Field()
     links_internal = scrapy.Field()

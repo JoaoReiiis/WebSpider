@@ -102,7 +102,6 @@ def build_spider_data_item(response, settings):
         'published_date': getattr(article, 'publish_date', None) or page_date,
         'title': getattr(article, 'title', ''),
         'description': getattr(article, 'meta_description', ''),
-        'lang': getattr(article, 'meta_lang', ''),
         'readable_text': cleaned_text[:MAX_TEXT_CHARS],
         'text_length': len(cleaned_text),
         'links_internal': list(internal_links)[:MAX_LINKS],

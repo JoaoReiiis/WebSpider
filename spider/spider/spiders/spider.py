@@ -23,16 +23,16 @@ class Spider(scrapy.Spider):
 
     start_urls = [
         "https://valedosinconfidentes.com.br/",
-        "https://ecossistemainovap.com.br/",
-        "https://nortevalley.com/",
-        "https://parquetecnologicosrs.com.br/",
-        "https://cesullab.com.br/index.html",
-        "https://inovatech.pnl.mg.gov.br",
-        "https://bdtechhub.com.br/bd/",
-        "https://tiradentesinnovation.com/",
-        "https://inovai.org.br/itajuba-hardtech/#:~:text=O%20Ecossistema,e%20inova%C3%A7%C3%A3o%20de%20Itajub%C3%A1%2FMG",
-        "https://centev.ufv.br/",   
-        "https://uberhub.com.br/"
+        #"https://ecossistemainovap.com.br/",
+        #"https://nortevalley.com/",
+        #"https://parquetecnologicosrs.com.br/",
+        #"https://cesullab.com.br/index.html",
+        #"https://inovatech.pnl.mg.gov.br",
+        #"https://bdtechhub.com.br/bd/",
+        #"https://tiradentesinnovation.com/",
+        #"https://inovai.org.br/",
+        #"https://centev.ufv.br/",   
+        #"https://uberhub.com.br/"
     ]
 
     @classmethod
@@ -54,6 +54,9 @@ class Spider(scrapy.Spider):
         spider.keyword_path_weight = settings.getfloat("KEYWORD_PATH_WEIGHT")
         spider.anchor_text_weight = settings.getfloat("ANCHOR_TEXT_WEIGHT")
         spider.depth_penalty = settings.getfloat("DEPTH_PENALTY")
+
+        spider.enable_full_crawl = settings.getbool("ENABLE_FULL_CRAWL")
+        spider.full_crawl_domains = settings.getlist("FULL_CRAWL_DOMAINS")
         
         return spider
 
@@ -77,6 +80,25 @@ class Spider(scrapy.Spider):
         except Exception as e:
             self.logger.error(f"Erro ao criar item SpiderData para {response.url}: {e}")
 
+        current_domain = extract_host(response.url)
+        is_full_crawl_target = self.enable_full_crawl and current_domain in self.full_crawl_domains
+
+        # --- MODO DE VARREDURA COMPLETA ---
+        if is_full_crawl_target:
+            self.logger.info(f"[Varredura Completa] Explorando todos os links internos de: {response.url}")
+            for a_sel in response.css("a[href]"):
+                href = a_sel.attrib.get("href")
+                if not href:
+                    continue
+                try:
+                    abs_url = response.urljoin(href)
+                    link_domain = extract_host(abs_url)
+                    if link_domain == current_domain:
+                        yield response.follow(abs_url, callback=self.parse)
+                except Exception:
+                    continue
+            return
+
         current_depth = response.meta.get("depth", 0)
         if current_depth >= self.max_depth:
             return
@@ -99,7 +121,6 @@ class Spider(scrapy.Spider):
                 candidates.append(LinkCandidate(url=abs_url, anchor=anchor_text, score=score))
 
         candidates = sorted(candidates, key=itemgetter(2), reverse=True)[:self.max_links_per_page]
-
         current_redirect_chain = response.meta.get('redirect_chain', [])
 
         for cand in candidates:
@@ -129,7 +150,6 @@ class Spider(scrapy.Spider):
             return 0.0
 
         score = 0.0
-
         try:
             origin_host = extract_host(response.url)
             candidate_host = extract_host(candidate_url)
